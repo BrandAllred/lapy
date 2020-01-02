@@ -1,65 +1,50 @@
 #!/env/bin/env python3
 
-
 import sys
 import getopt
-import os
+import nhapy
 
 
-SOURCE_FILE_ERR = "There was an error with the source file: "
-TARGET_DIRECTORY_ERR = "There was an error with the target directory: "
-
-def scan_directory(targetDirectory, sourceFile):
-    try:
-        f = open(sourceFile, "r")
-        sourceFileContents = f.read()
-    except OSError as err:
-        print(SOURCE_FILE_ERR + str(err))
-        sys.exit(2)
-
-    try:
-        print(str(os.listdir(targetDirectory)))
-        #for (dirpath, dirname, filename) in os.walk(targetDirectory):
-        #    print("dirpath: " + dirpath)
-        #    print("dirName: " + str(dirname))
-        #    print("fileName: " + str(filename))
-    except OSError as err:
-        print(TARGET_DIRECTORY_ERR + str(err))
-        sys.exit(2)
+def object_factory(option_list):
+    """For now, we only need to return one type of object"""
+    return nhapy.Nhapy()
 
 
 def display_help():
-    print("Options: \n" +
+    print("Options:\n" +
           "-h\tDisplays all options, and descriptions of all options.\n" +
-          "-t\tTarget directory option. This tells lapy where to start. This option is required.\n" +
-          "-s\tSource file option. This tells lapy what to write as the header. This option is required."
-        )
+          "\nArguments:\n" +
+          "First argument:\t\tThis tells lapy where to start. Include double quotes if the file location has a space " +
+          "in it.\n" +
+          "Second argument:\tThis tells lapy what to write as the header.\n" +
+          "\nAll arguments are required!"
+          )
 
 
 def main(argv):
     try:
-        optlist, args = getopt.getopt(argv, "s:t:h")
+        option_list, argument_list = getopt.getopt(argv, "h")
     except getopt.GetoptError as err:
         print(err)
         display_help()
         sys.exit(2)
 
-    # Required option dictionary, so I don't have to write an if tree for each option.
-    reqoptdict = {
-            "-t": None,
-            "-s": None,
-            }
-
-    for option in optlist:
-        if option[0] in reqoptdict.keys():
-            reqoptdict[option[0]] = option[1]
-        elif "-h" == option[0]:
+    for option in option_list:
+        if "-h" == option[0]:
             display_help()
             return
 
-    # Assume everything in the required option dictionary is not None.
-    scan_directory(reqoptdict["-t"], reqoptdict["-s"])
+    try:
+        target_directory = argument_list[0]
+        source_file = argument_list[1]
+
+        header_handler = object_factory(option_list)
+
+        header_handler.insert_headers(target_directory, source_file)
+    except IndexError:
+        print("\nERROR: An argument was missing.\n")
+        display_help()
+        sys.exit(2)
 
 
 main(sys.argv[1:])
-
